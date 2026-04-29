@@ -1,6 +1,7 @@
 import numpy as np # hamiltonian neural network with diffusion and latent space
 
 dt=np.float64
+# You can modify the number of neurons but number of layers
 M1=[6, 100, 10] # <- map-in layer structure
 S=[6, 25, 5, 25, 5] # <- P and Q MLP layer structure
 D=[S[-1]*2+1, 20, 5] # <- diffusion layer structure
