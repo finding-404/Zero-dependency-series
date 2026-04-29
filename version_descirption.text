@@ -1,0 +1,37 @@
+!!!This version only run on google colab. So please insert the code in different cells in colab for testing.!!!
+
+Project description:
+    This Neural SDE amis to learn and predict the next trading day open, high, low, close price and volumn of Invesco NASDAQ 100 ETF (QQQM) only,
+so no input box is included in this version, it may be added in the future version.
+
+Model description:
+    In this Neural SDE, I use two MLP with latent space and Spectral Normalization (P and Q) and a Diffusion model in side the leapfrog integrator to simulate a Hamiltonian System with noise.
+Since I add diffusion model inside, I also added a Monte Carlo simulation to get the range of prediction.
+
+    The input is [open price, high price, low price, close price, volumn, the time interval between previous trade day and next trade day ],
+I use Log-Return then multiply them with 100 for normalizing the open, high, low, close price, Log(1+x) then divide it by 15 for normalizing the volumn, divide the time interval with 10.
+After the map-in MLP map the data from 6 dimention to 10 dimention, the data will be splited in to two 5 dimention vector then feed into P and Q inside leapfrog.
+The Diffusion model will add noise to the output of P after drift in the Kick-Drift-Kick. After integration, output from P and Q will concat as the integration output (10D vector), then feed into 
+the map-out MLP and map the ouput back to 5D vector.
+
+    I do not save any data during forward pass, I calculate the forward result during backward pass, it is memory-friendly.
+
+Observasion:
+    In this version, I found that the prediction of the SDE network not yet capture the geomery of the price candles, which 
+after Monte Carlo simulation, the low price prediction may sometimes higher than the high price in some prediction. From physical 
+perspective, this suggested that the Hamiltonian energy surface cannot capture the geomery of the finance candles.
+
+    While the SDE excels at capturing time-series momentum, it lacks the spatial constraints inherent to financial candles.
+
+Future version:
+    I will add more input features like MACD and RSI to allow the model to learn and capture the geomery of finance candles, and 
+able to run on other platform and environment.
+
+Important note:
+    I am not a professional Quant, do not take this model prediction as your trading decision.
+
+libraies used:
+    Numpy, yfinance, pandas, pandas_market_calendars, datetime, zoneinfo
+    please install these libraries before run the model if you have not installed.
+
+!!!This version only run on google colab. So please insert the code in different cells in colab for testing.!!!
