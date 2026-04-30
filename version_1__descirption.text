@@ -15,7 +15,7 @@ The Diffusion model will add noise to the output of P after drift in the Kick-Dr
 the map-out MLP and map the ouput back to 5D vector.
 
     I do not save any data during forward pass, I calculate the forward result during backward pass, it is memory-friendly. You can modify the nuber of neurons in all the network, but cannot modify 
-the number of layers, the number of layers is fixed, it will output error if you add or delete layers.
+the number of layers, the number of layers is fixed, it will output error if you add or delete layers. Also you can adjust the hyper paramaters for testing.
 
 Observasion:
     In this version, I found that the prediction of the SDE network not yet capture the geomery of the price candles, which 
