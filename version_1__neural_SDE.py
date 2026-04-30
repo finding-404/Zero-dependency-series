@@ -327,20 +327,20 @@ def data_solver(In):
 
   return np.array([f'{np.min(open)} ~ {np.max(open)}', f'{np.min(high)} ~ {np.max(high)}', f'{np.min(low)} ~{np.max(low)}', f'{np.min(close)} ~ {np.max(close)}', f'{np.min(volumn)} ~ {np.max(volumn)}'])
 
-
+#you can set the hyper paramaters
 num=128 # <-batch size
-data=train_data[0:-2]
-time=time_interval[0:-2]
-answer=train_answer[0:-2]
+data=train_data[0:-1]
+time=time_interval[0:-1]
+answer=train_answer[0:-1]
 test=np.tile(test_data, (1000,1))
 print(test)
-steps=5
-threshold=0.05
-lr=0.005
-beta_1=0.95
-beta_2=0.99
-lam=0.005
-gamma=3
+steps=5            # steps for leapfrog integration
+threshold=0.05     # gradient clipping threshold
+lr=0.005           # learning rate
+beta_1=0.95        # beta for adam mean
+beta_2=0.99        # beta for adam variance
+lam=0.005          # weight decay lambda
+gamma=3            # spectral normalization gamma
 
 # spilting whole data into multiple batch data
 batch=[]
