@@ -1,6 +1,84 @@
-Project Desciption
-  This model also aims to predict the QQQM Price at the latest trading day, I not only use QQQM price as input, also use VIX, 
-NDX future and QQQM in 14 day FFT repressentation as the input.
+Project Desciption:
+    This model also aims to predict the QQQM Price at the latest trading day, I not only use QQQM price as input, also use VIX, 
+  NDX future and QQQM in 14 day FFT repressentation as the input.
 
-Model Description
-  In this Neural SDE, I used two AdamNODE which both own a map in MLP and map out MLP.
+Model Description:
+    In this Neural SDE, I used two AdamNODE which both own a map in MLP and map out MLP.
+
+    Structure:
+      MLP(map in)--->AdamNODE---->MLP(map out)--->output(Open Price)
+                                    |(last hidden layer output as input)
+                                    |
+                                    -->MLP(map in)--->AdamNODE--->MLP(map out)--->candle layer---> output(High Price, Low Price, Close Price)
+                                    
+      candle layer is used to make prediction price fit the geomery of the finance candles. Where candle layer can be discribe by the following formula:
+        close price=close price
+        high price=MAX(0, close price)+A*S(high price)
+        low price=MIN(0, close price)-A*S(low price)
+
+        A: a scalar for limiting the Gap between high price and low price
+        S: Softplus Function
+                                
+    In AdamNODE, i use Euler-Maruyama method, which the whole AdamNODE is:
+      momemtum=momentum+(1-0.9)*(-MLP_1(hidden state, delta t)-momentum)
+      variance=variance+(1-0.99)*(MLP_2(hidden state, delta t)^2-variance)
+
+      force=momentum/SQRT(variance+1e-8)
+      drag=MLP_3(hidden state, VIX, delta t)
+      diffusion=MLP_4(hidden state, VIX, delta t)
+
+      hidden state=((hidden state+delta_t*force)+diffusion*SQRT(delta_t)*N(0~1))/(1+delta_t*drag)
+
+      SQRT: square root
+      N(0~1): random value from Gaussian Normal Distribution where mean is 0 and variance is 1
+
+    Since AdamNODE is simulating a physical system with drag and noise, it cannot be perfectly reversible, otherwise it will cause a huge numerical residual. 
+    So i use BPTT in AdamNODE instead of Sensitive Adjoint Method. However, I only saved the momentum, variance, force, drag, diffusion, noise in memory, so I
+    can use these value to recalculate all value in every MLP then get the gradient in backpropagation.
+
+Result:
+    Since I used candle layer, the output is perfect to fit the geomery of the finance candles, also drag helps control the price prediction stays in a normal 
+  range.
+
+User guide:
+    before using, please sure you download the following libraries:
+      numpy, pandas, matplotlib, time, datetime, zoneinfo, yfinance, pandas_market_calendars
+      
+    Since you able to modify almost everything in the model, including the numbers of hifdden layer and neurons, activation function etc, to ensure no to 
+  product any error after modify anything, here is the initialization guide.
+  
+                  input layer--->hidden layer 1--->hidden layer 2--->hidden layer 3--->output
+         neurons
+         numbers:      10              20               50                30             50
+          
+      activation:                     ReLU             SiLU            Softplus      identity
+      
+   normalization:                      LN            identity            RMS         identity
+   
+   normalize with
+     learnable   :                    True            False             False         False
+    paramaters
+
+  My_MLP=MLP([10, 20, 50, 30, 50], 
+             ['ReLU', 'SiLU', 'Softplus', 'identity'], 
+             ['LN', 'identity', 'RMS', 'identity'],
+             [True, False, False, False],
+             optimizer='Adam')
+
+  My_NODE=AdamNODE([[50, 20, 50, 30, 50], [50, 20, 50, 30, 50], [40, 20, 50, 30, 50], [10, 20, 50, 30, 50]],
+                   [['ReLU', 'SiLU', 'Softplus', 'identity'], ['ReLU', 'SiLU', 'Softplus', 'identity'], ['ReLU', 'SiLU', 'Softplus', 'identity'], ['ReLU', 'SiLU', 'Softplus', 'identity']],
+                   [['LN', 'identity', 'RMS', 'identity'], ['LN', 'identity', 'RMS', 'identity'], ['LN', 'identity', 'RMS', 'identity'], ['LN', 'identity', 'RMS', 'identity']],
+                   [[True, False, False, False], [True, False, False, False], [True, False, False, False], [True, False, False, False]],
+                   ['Adam', 'RMSprop', 'AdaGrad', 'Momentum'])
+                   
+    note: Every MLP in AdamNODE output size MUST be the same size. The first and second MLP input and output size MUST be same.
+          You cannot modify the number of MLP in AdamNODE, it is fixed to use four MLP.
+                   
+  avaliable activation function: ReLU, LeakyReLU, SiLU, Tanh, Sigmoid, identity(default)
+  available normalization: LN, RMS, None(default)
+  available optimizer: Adam, RMS, AdaGrad, Momentum, GD(gradient descent, default)
+  please sure the upper and lower case is totally same as above, otherwise, it will use the default
+
+  If don't want to cause any error, use the default setting that the code I have posted. If caused error after modify, please follow the guide above or ask AI for help.
+  
+                
