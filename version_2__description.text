@@ -1,1 +1,6 @@
+Project Desciption
+  This model also aims to predict the QQQM Price at the latest trading day, I not only use QQQM price as input, also use VIX, 
+NDX future and QQQM in 14 day FFT repressentation as the input.
 
+Model Description
+  In this Neural SDE, I used two AdamNODE which both own a map in MLP and map out MLP.
